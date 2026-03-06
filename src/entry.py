@@ -16,9 +16,6 @@ templates = Jinja2Templates("templates")
 async def root():
     return {"message": "Hello, World!"}
 
-@app.get("/home")
-async def get_home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/env")
