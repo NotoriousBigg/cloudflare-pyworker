@@ -1,5 +1,6 @@
 from workers import WorkerEntrypoint
 from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import asgi
 
@@ -9,9 +10,16 @@ class Default(WorkerEntrypoint):
 
 app = FastAPI()
 
+templates = Jinja2Templates("templates")
+
 @app.get("/")
 async def root():
     return {"message": "Hello, World!"}
+
+@app.get("/home")
+async def get_home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.get("/env")
 async def root(req: Request):

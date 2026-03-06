@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "webtypy>=0.1.7",
-    "fastapi"
+    "fastapi",
+    "jinja2"
 ]
 
 [dependency-groups]

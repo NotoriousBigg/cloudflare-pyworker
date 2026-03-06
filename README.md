@@ -1,116 +1,94 @@
 # Cloudflare Python Worker
 
-
-### BEFORE YOU START GIT CLONE, PLEASE READ TO THE END TO NOT END UP GIVING UP
-
-After hour of considering whether to continue coding or start poultry, I managed to deploy my first python CloudFlare worker.
-It took me around 3 hours just do deploy the code listed in official docs(https://developers.cloudflare.com/workers/languages/python/packages/fastapi/)
-
-This is what I managed to come up with, and coding is worth again
+A guide and template for deploying Python-based Cloudflare Workers using FastAPI and `uv`.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/)
-- [uv](https://github.com/astral-sh/uv) (Python package installer and resolver)
+Before getting started, ensure you have the following installed:
 
-## Setup
+- **[Node.js](https://nodejs.org/)**: Required for running Wrangler.
+- **[uv](https://github.com/astral-sh/uv)**: A fast Python package installer and resolver used for managing dependencies and environments.
 
-1. Run this commands on your project(preferably in your pc terminal and not ide terminal):
-please continue reading first, dont open your terminal yet
-   ```bash
-   uv init
-   uv tool install workers-py
-   uv run pywrangler init
-   ```
-   This will create a `pyproject.toml` file with workers-py as a development dependency.
-   `pywrangler init` will create a wrangler config file.
+## Quick Start
 
-## Development
+### 1. Initialize the Project
 
-To run the worker locally(I dont know if it will work since It failed for me, I suck at cli stuff):
+Run the following commands in your project directory (using your system terminal):
+
+```bash
+uv init
+uv tool install workers-py
+uv run pywrangler init
+```
+
+- `uv init`: Initializes a new Python project.
+- `uv tool install workers-py`: Installs the `workers-py` tool.
+- `uv run pywrangler init`: Creates the necessary `wrangler.jsonc` configuration file.
+
+### 2. Local Development
+
+To run the worker locally for testing:
 
 ```bash
 uv run pywrangler dev
 ```
 
-## Deployment
+### 3. Deployment
 
-To deploy the worker to Cloudflare:
+#### Option A: CLI Deployment (Recommended)
+
+To deploy your worker directly from the command line:
 
 ```bash
 uv run pywrangler deploy
 ```
-Honestly speaking, I suck at cli tools, so this failed for me(don't know how, but it failed, believe me)
-so I came up with this other method of using the GUI provided by CloudFlare directly from your CloudFlare Workers & Pages.
 
+#### Option B: GitHub Integration (via Cloudflare Dashboard)
 
-To do so, you will need to follow this steps.
+If you prefer a GUI-based approach or want to set up CI/CD, you can use the Cloudflare Workers & Pages dashboard:
 
-1. Fork this repo
-    https://github.com/NotoriousBigg/cloudflare-pyworker/fork
+1. **Fork this repository**: [Fork Link](https://github.com/NotoriousBigg/cloudflare-pyworker/fork)
+2. **Create a New Application**: In the Cloudflare dashboard, select "Create Application" > "Pages" or "Workers" and choose **"Connect to Git"**.
+   - <img src="./src/assets/create_application.png" alt="Select continue with GitHub" width="500">
+3. **Connect GitHub**: Select your repository and click **Next**.
+   - <img src="./src/assets/select_repo.png" alt="Select the repository" width="500">
+4. **Configure Settings**: Ensure the project name matches the `name` field in your `wrangler.jsonc` and `package.json`.
+   - <img src="./src/assets/set_configs.png" alt="Configure settings" width="500">
+   - **Important**: If your project already has a `pyproject.toml` file, you do **not** need to provide a custom build command. The Cloudflare build system will detect and use it automatically.
+5. **Deploy**: Click the **"Save and Deploy"** button. Your build status should look like this:
+   - <img src="./src/assets/builds.png" alt="Final builds" width="500">
 
-2. Import the project to your CloudFlare workers.
+## Adding Routes
 
-    you can import this project to your cloudflare workers by clicking on the "Create Application" button.
-    This interface will appear:
-    <img src="./src/assets/create_application.png" alt="select continue with github" width="500">
+You can add new routes in `src/entry.py`. For larger projects, you can use FastAPI's `APIRouter` to organize your code.
 
-    Select "continue with github"
+```python
+from fastapi import FastAPI, APIRouter
 
-    This will prompt you to install cloudflare workers to your github if you have not done so. If you have already installed, proceed to the next step
+app = FastAPI()
+router = APIRouter()
 
-    Select the repo you want:
-    <img src="./src/assets/select_repo.png" alt="select the repository" width="500">
+@router.get("/hello")
+def read_hello():
+    return {"message": "Hello World"}
 
-    and click Next
-
-    On the next screen, Setup this:
-    <img src="./src/assets/set_configs.png" alt="set the configs" width="500">
-
-    Note:
-        The project name config here should be the same as the one in wrangler.jsonc
-        ```jsonc
-        	"name": "cloudflare-pyworker",
-        ```
-        and in package.json(not sure though):
-        ```
-        "name": "cloudflare-pyworker",
-        ```
-
-    You should not fill the Build command if your project have the pyproject.toml file.
-    From my opinion(trust me bro):
-        run this command:
-            ```
-            uv init && uv tool install workers-py && uv run pywrangler init
-            ```
-        before everything. This will setup everything for you, then you should  not fill the build command.
-
-        but if you are a pro dev, then you can add the command as it is(this will not work if you already have the toml file)
-
-
-    Then click on the "Deploy button"
-
-
-    At last, the builds for the project should be as:
-
-    <img src="./src/assets/builds.png" alt="Final builds" width="500">
-
-    That's it.
-
-To add new routes, you just add the code in /src/entry.py or you set up your own custom routers(from fastapi import APIRouter)
-
-About dependencies, cloudflare pyworkers does not support requirements.txt files.
-
-They say you should name the files as cf-requirements.txt. But this still does not work, so the correct way is to add them
-on the pyproject.toml file:
-
+app.include_router(router)
 ```
+
+## Managing Dependencies
+
+Cloudflare Python Workers use `pyproject.toml` for dependency management. Traditional `requirements.txt` or `cf-requirements.txt` files may not be reliably supported.
+
+Add your dependencies to the `dependencies` section of your `pyproject.toml`:
+
+```toml
 dependencies = [
+    "fastapi",
     "webtypy>=0.1.7",
-    "fastapi"
-    "you can add other here like httpx, etc(don't know if they support all pypi modules)"
+    "httpx",
 ]
 ```
-This is one reason why you should run the build commands manually and then upload them to github.
+
+After modifying dependencies, ensure you run the build commands or update your environment before pushing to GitHub.
 
 
