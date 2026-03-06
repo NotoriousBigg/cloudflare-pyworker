@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "testweb",
+	"name": "cloudflare-pyworker",
 	"main": "src/entry.py",
 	"compatibility_date": "2026-03-01",
 	"compatibility_flags": [
